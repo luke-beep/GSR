@@ -1,4 +1,4 @@
-# GSR
+<h3 align="center" style="font-weight: bold;">GSR</h3>
 
 ![Product](assets/product.png)
 
