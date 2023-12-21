@@ -28,7 +28,7 @@ function Log-Message {
 #----------------------------------------------
 
 $scriptInfo = [PSCustomObject]@{
-    "Script Name" = "GenerateSystemReport.ps1"
+    "Script Name" = "GenerateSystemReport (GSR)"
     "Script Version" = "1.0.0"
     "Script Description" = "A lightweight script that generates a system report for troubleshooting purposes."
     "Script Author" = "Azrael (LukeHjo)"
@@ -77,15 +77,6 @@ $debugFolder = "$reportFolder\Debug"
 # Debug Mode
 $debug = $false
 
-# Xperf Capture Time (in seconds)
-$XperfCaptureTime = 10
-    
-# Xperf output file
-$xperfOutputFile = "$reportFolder\xperf_output.etl"
-
-# Xperf output text file
-$xperfOutputTextFile = "$reportFolder\xperf_output.txt"
-
 # Transcript File
 $transcriptFile = "$reportFolder\debug.txt"
 
@@ -98,9 +89,6 @@ $scriptVariables = [PSCustomObject]@{
     "Report Folder" = $reportFolder
     "Debug Folder" = $debugFolder
     "Debug Mode" = $debug
-    "Xperf Capture Time" = $XperfCaptureTime
-    "Xperf Output File" = $xperfOutputFile
-    "Xperf Output Text File" = $xperfOutputTextFile
     "Transcript File" = $transcriptFile
 }
 
@@ -119,6 +107,17 @@ Start-Sleep -Seconds 5
 #----------------------------------------------
 
 try {
+    # Create Report Folder
+    if (!(Test-Path $reportFolder)) {
+        New-Item -ItemType Directory -Path $reportFolder
+        Log-Message "Report folder created at $reportFolder"
+    }
+    else {
+        Start-Process robocopy -ArgumentList "/mir $emptyFolder $reportFolder" -NoNewWindow -Wait
+        Remove-Item -Recurse -Force $reportFolder
+        Log-Message "Report folder recreated at $reportFolder"
+    }
+
     # Create Transcript File
     if (!(Test-Path $transcriptFile)) {
         New-Item -ItemType File -Path $transcriptFile
@@ -139,17 +138,6 @@ try {
         Remove-Item -Recurse -Force $emptyFolder
         New-Item -ItemType Directory -Path $emptyFolder
         Log-Message "Empty folder recreated at $emptyFolder"
-    }
-
-    # Create Report Folder
-    if (!(Test-Path $reportFolder)) {
-        New-Item -ItemType Directory -Path $reportFolder
-        Log-Message "Report folder created at $reportFolder"
-    }
-    else {
-        Start-Process robocopy -ArgumentList "/mir $emptyFolder $reportFolder" -NoNewWindow -Wait
-        Remove-Item -Recurse -Force $reportFolder
-        Log-Message "Report folder recreated at $reportFolder"
     }
 
     # Start Transcript
@@ -174,212 +162,251 @@ try {
         # Start Debugging
     }
     else {
+        # Local Variables
+        $hardwareInformationFolder = "$reportFolder\HardwareInformation"
+        $operatingSystemDetailsFolder = "$reportFolder\OperatingSystemDetails"
+        $networkConfigurationDiagnosticsFolder = "$reportFolder\NetworkConfigurationDiagnostics"
+        $diskStorageInformationFolder = "$reportFolder\DiskStorageInformation"
+        $systemSecurityAuditFolder = "$reportFolder\SystemSecurityAudit"
+        $systemApplicationLogsFolder = "$reportFolder\SystemApplicationLogs"
+        $servicesProcessesFolder = "$reportFolder\ServicesProcesses"
+        $installedSoftwareDriversFolder = "$reportFolder\InstalledSoftwareDrivers"
+        $systemPerformanceDiagnosticsFolder = "$reportFolder\SystemPerformanceDiagnostics"
+        $advancedSystemInformationFolder = "$reportFolder\AdvancedSystemInformation"
+        $powerManagementFolder = "$reportFolder\PowerManagement"
+        $userGroupInformationFolder = "$reportFolder\UserGroupInformation"
+        $backupRestoreInformationFolder = "$reportFolder\BackupRestoreInformation"
+
+        # Create Folders
+        New-Item -ItemType Directory -Path $hardwareInformationFolder
+        New-Item -ItemType Directory -Path $operatingSystemDetailsFolder
+        New-Item -ItemType Directory -Path $networkConfigurationDiagnosticsFolder
+        New-Item -ItemType Directory -Path $diskStorageInformationFolder
+        New-Item -ItemType Directory -Path $systemSecurityAuditFolder
+        New-Item -ItemType Directory -Path $systemApplicationLogsFolder
+        New-Item -ItemType Directory -Path $servicesProcessesFolder
+        New-Item -ItemType Directory -Path $installedSoftwareDriversFolder
+        New-Item -ItemType Directory -Path $systemPerformanceDiagnosticsFolder
+        New-Item -ItemType Directory -Path $advancedSystemInformationFolder
+        New-Item -ItemType Directory -Path $powerManagementFolder
+        New-Item -ItemType Directory -Path $userGroupInformationFolder
+        New-Item -ItemType Directory -Path $backupRestoreInformationFolder
+
+        # Xperf Capture Time (in seconds)
+        $XperfCaptureTime = 10
+            
+        # Xperf output file
+        $xperfOutputFile = "$systemPerformanceDiagnosticsFolder\xperf_output.etl"
+
+        # Xperf output text file
+        $xperfOutputTextFile = "$systemPerformanceDiagnosticsFolder\xperf_output.txt"
+
         # Start System Report
         Log-Message "Starting System Report"
 
         # GPResult for Group Policy Report
-        GPResult /H "$reportFolder\GPReport.html"
+        GPResult /H "$systemSecurityAuditFolder\GPReport.html"
         Log-Message "Generated Group Policy Report"
 
         # System Information
-        systeminfo | Out-File "$reportFolder\systeminfo.txt"
+        systeminfo | Out-File "$advancedSystemInformationFolder\systeminfo.txt"
         Log-Message "Collected system information"
 
         # Disk Information
-        Get-Disk | Out-File "$reportFolder\diskinfo.txt"
+        Get-Disk | Out-File "$diskStorageInformationFolder\diskinfo.txt"
         Log-Message "Collected disk information"
 
         # Network Configuration
-        Get-NetIPConfiguration | Out-File "$reportFolder\networkconfig.txt"
+        Get-NetIPConfiguration | Out-File "$networkConfigurationDiagnosticsFolder\networkconfig.txt"
         Log-Message "Collected network configuration"
 
         # Network Adapter Information
-        Get-NetAdapter | Out-File "$reportFolder\netadapterinfo.txt"
+        Get-NetAdapter | Out-File "$networkConfigurationDiagnosticsFolder\netadapterinfo.txt"
         Log-Message "Collected network adapter information"
 
         # Installed Programs
-        Get-WmiObject -Class Win32_Product | Select-Object Name, Version | Out-File "$reportFolder\installedprograms.txt"
+        Get-WmiObject -Class Win32_Product | Select-Object Name, Version | Out-File "$installedSoftwareDriversFolder\installedprograms.txt"
         Log-Message "Collected installed programs"
 
         # Windows Services
-        Get-Service | Out-File "$reportFolder\services.txt"
+        Get-Service | Out-File "$servicesProcessesFolder\services.txt"
         Log-Message "Collected Windows services"
 
         # Process List
-        Get-Process | Out-File "$reportFolder\processlist.txt"
+        Get-Process | Out-File "$servicesProcessesFolder\processlist.txt"
         Log-Message "Collected process list"
 
         # Event Logs
-        Get-EventLog -LogName System | Out-File "$reportFolder\systemeventlog.txt"
-        Get-EventLog -LogName Application | Out-File "$reportFolder\applicationeventlog.txt"
-        Get-EventLog -LogName Security | Out-File "$reportFolder\securityeventlog.txt"
+        Get-EventLog -LogName System | Out-File "$systemApplicationLogsFolder\systemeventlog.txt"
+        Get-EventLog -LogName Application | Out-File "$systemApplicationLogsFolder\applicationeventlog.txt"
+        Get-EventLog -LogName Security | Out-File "$systemApplicationLogsFolder\securityeventlog.txt"
         Log-Message "Collected event logs"
 
         # Hardware Information
-        Get-WmiObject Win32_Processor | Out-File "$reportFolder\cpuinfo.txt"
+        Get-WmiObject Win32_Processor | Out-File "$hardwareInformationFolder\cpuinfo.txt"
         Log-Message "Collected hardware information"
-        Get-WmiObject Win32_PhysicalMemory | Out-File "$reportFolder\memoryinfo.txt"
+        Get-WmiObject Win32_PhysicalMemory | Out-File "$hardwareInformationFolder\memoryinfo.txt"
         Log-Message "Collected hardware information"
-        Get-WmiObject Win32_DiskDrive | Out-File "$reportFolder\driveinfo.txt"
+        Get-WmiObject Win32_DiskDrive | Out-File "$hardwareInformationFolder\driveinfo.txt"
         Log-Message "Collected hardware information"
-        Get-WmiObject Win32_VideoController | Out-File "$reportFolder\gpuinfo.txt"
+        Get-WmiObject Win32_VideoController | Out-File "$hardwareInformationFolder\gpuinfo.txt"
         Log-Message "Collected hardware information"
         
 
         # Security Settings
-        Get-LocalGroup | Out-File "$reportFolder\localgroups.txt"
+        Get-LocalGroup | Out-File "$systemSecurityAuditFolder\localgroups.txt"
         Log-Message "Collected security settings"
-        Get-LocalUser | Out-File "$reportFolder\localusers.txt"
+        Get-LocalUser | Out-File "$systemSecurityAuditFolder\localusers.txt"
         Log-Message "Collected security settings"
 
         # System Uptime
-        (Get-Uptime).ToString() | Out-File "$reportFolder\systemuptime.txt"
+        (Get-Uptime).ToString() | Out-File "$systemPerformanceDiagnosticsFolder\systemuptime.txt"
         Log-Message "Collected system uptime"
 
         # Firewall Rules
-        Get-NetFirewallRule | Out-File "$reportFolder\firewallrules.txt"
+        Get-NetFirewallRule | Out-File "$systemSecurityAuditFolder\firewallrules.txt"
         Log-Message "Collected firewall rules"
 
         # Scheduled Tasks
-        Get-ScheduledTask | Out-File "$reportFolder\scheduledtasks.txt"
+        Get-ScheduledTask | Out-File "$systemPerformanceDiagnosticsFolder\scheduledtasks.txt"
         Log-Message "Collected scheduled tasks"
 
         # Environment Variables
-        Get-ChildItem Env: | Out-File "$reportFolder\environmentvariables.txt"
+        Get-ChildItem Env: | Out-File "$advancedSystemInformationFolder\environmentvariables.txt"
         Log-Message "Collected environment variables"
 
         # BIOS Information
-        Get-WmiObject Win32_BIOS | Out-File "$reportFolder\biosinfo.txt"
+        Get-WmiObject Win32_BIOS | Out-File "$advancedSystemInformationFolder\biosinfo.txt"
         Log-Message "Collected BIOS information"
 
         # Operating System Details
-        Get-WmiObject Win32_OperatingSystem | Format-List * | Out-File "$reportFolder\osdetails.txt"
+        Get-WmiObject Win32_OperatingSystem | Format-List * | Out-File "$operatingSystemDetailsFolder\osdetails.txt"
         Log-Message "Collected operating system details"
 
         # System Restore Information
-        Get-ComputerRestorePoint | Out-File "$reportFolder\systemrestoreinfo.txt"
+        Get-ComputerRestorePoint | Out-File "$backupRestoreInformationFolder\systemrestoreinfo.txt"
         Log-Message "Collected system restore information"
 
         # Logical Disk Information
-        Get-WmiObject Win32_LogicalDisk | Format-List * | Out-File "$reportFolder\logicaldiskinfo.txt"
+        Get-WmiObject Win32_LogicalDisk | Format-List * | Out-File "$diskStorageInformationFolder\logicaldiskinfo.txt"
         Log-Message "Collected logical disk information"
 
         # Active Network Connections
-        Get-NetTCPConnection | Out-File "$reportFolder\netconnections.txt"
+        Get-NetTCPConnection | Out-File "$networkConfigurationDiagnosticsFolder\netconnections.txt"
         Log-Message "Collected active network connections"
 
         # User Account Details
-        Get-WmiObject Win32_UserAccount | Format-List * | Out-File "$reportFolder\useraccounts.txt"
+        Get-WmiObject Win32_UserAccount | Format-List * | Out-File "$userGroupInformationFolder\useraccounts.txt"
         Log-Message "Collected user account details"
 
         # System Security Settings
-        secedit /export /cfg "$reportFolder\securitysettings.cfg"
+        secedit /export /cfg "$systemSecurityAuditFolder\securitysettings.cfg"
         Log-Message "Collected system security settings"
 
         # Driver Information
-        Get-WmiObject Win32_PnPSignedDriver | Select-Object DeviceName, DriverVersion, Manufacturer | Out-File "$reportFolder\driverinfo.txt"
+        Get-WmiObject Win32_PnPSignedDriver | Select-Object DeviceName, DriverVersion, Manufacturer | Out-File "$installedSoftwareDriversFolder\driverinfo.txt"
         Log-Message "Collected driver information"
 
         # Advanced Disk Management Information
-        Get-Partition | Out-File "$reportFolder\diskpartitions.txt"
+        Get-Partition | Out-File "$diskStorageInformationFolder\diskpartitions.txt"
         Log-Message "Collected advanced disk management information"
-        Get-Volume | Out-File "$reportFolder\volumeinfo.txt"
+        Get-Volume | Out-File "$diskStorageInformationFolder\volumeinfo.txt"
         Log-Message "Collected advanced disk management information"
 
         # Detailed Version and Update Information
-        Get-WmiObject Win32_QuickFixEngineering | Out-File "$reportFolder\installedupdates.txt"
+        Get-WmiObject Win32_QuickFixEngineering | Out-File "$operatingSystemDetailsFolder\installedupdates.txt"
         Log-Message "Collected detailed version and update information"
-        [System.Environment]::OSVersion.Version | Out-File "$reportFolder\osversion.txt"
+        [System.Environment]::OSVersion.Version | Out-File "$operatingSystemDetailsFolder\osversion.txt"
         Log-Message "Collected detailed version and update information"
 
         # Detailed Network Profile Information
-        Get-NetConnectionProfile | Out-File "$reportFolder\networkprofiles.txt"
+        Get-NetConnectionProfile | Out-File "$networkConfigurationDiagnosticsFolder\networkprofiles.txt"
         Log-Message "Collected detailed network profile information"
 
         # Power Plan Information
-        powercfg /list | Out-File "$reportFolder\powerplans.txt"
+        powercfg /list | Out-File "$powerManagementFolder\powerplans.txt"
         Log-Message "Collected power plan information"
 
         # Detailed Environment Information
-        Get-ComputerInfo | Out-File "$reportFolder\computerinfo.txt"
+        Get-ComputerInfo | Out-File "$advancedSystemInformationFolder\computerinfo.txt"
         Log-Message "Collected detailed environment information"
 
         # Battery Report
         if ((Get-WmiObject Win32_Battery)) {
-            powercfg /batteryreport /output "$reportFolder\batteryreport.html"
+            powercfg /batteryreport /output "$powerManagementFolder\batteryreport.html"
             Log-Message "Generated battery report"
         }
 
         # DirectX Diagnostic Report
-        dxdiag /t "$reportFolder\dxdiag.txt"
+        dxdiag /t "$operatingSystemDetailsFolder\dxdiag.txt"
         Log-Message "Generated DirectX diagnostic report"
 
         # System File Checker Report
-        sfc /scannow | Out-File "$reportFolder\sfc.txt"
+        sfc /scannow | Out-File "$systemPerformanceDiagnosticsFolder\sfc.txt"
         Log-Message "Generated System File Checker report"
 
         # DISM Scan Report
-        DISM /Online /Cleanup-Image /ScanHealth | Out-File "$reportFolder\dism.txt"
+        DISM /Online /Cleanup-Image /ScanHealth | Out-File "$systemPerformanceDiagnosticsFolder\dism.txt"
         Log-Message "Generated DISM scan report"
 
         # System Security Configuration
-        Get-WmiObject Win32_LogicalShareSecuritySetting | Out-File "$reportFolder\sharesecuritysettings.txt"
+        Get-WmiObject Win32_LogicalShareSecuritySetting | Out-File "$systemSecurityAuditFolder\sharesecuritysettings.txt"
         Log-Message "Collected system security configuration"
-        Get-WmiObject Win32_NTEventlogFile | Out-File "$reportFolder\eventlogsettings.txt"
+        Get-WmiObject Win32_NTEventlogFile | Out-File "$systemSecurityAuditFolder\eventlogsettings.txt"
         Log-Message "Collected system security configuration"
 
         # Advanced Network Diagnostics
-        Test-NetConnection | Out-File "$reportFolder\networkdiagnostics.txt"
+        Test-NetConnection | Out-File "$networkConfigurationDiagnosticsFolder\networkdiagnostics.txt"
         Log-Message "Collected advanced network diagnostics"
-        Get-NetRoute | Out-File "$reportFolder\netroutes.txt"
+        Get-NetRoute | Out-File "$networkConfigurationDiagnosticsFolder\netroutes.txt"
         Log-Message "Collected advanced network diagnostics"
 
         # Detailed Driver Information
-        Get-WindowsDriver -Online | Out-File "$reportFolder\windowsdrivers.txt"
+        Get-WindowsDriver -Online | Out-File "$installedSoftwareDriversFolder\windowsdrivers.txt"
         Log-Message "Collected detailed driver information"
 
         # Detailed Service Configuration
-        Get-WmiObject Win32_Service | Out-File "$reportFolder\serviceconfigurations.txt"
+        Get-WmiObject Win32_Service | Out-File "$servicesProcessesFolder\serviceconfigurations.txt"
         Log-Message "Collected detailed service configuration"
 
         # User Login History
-        Get-WmiObject Win32_NetworkLoginProfile | Out-File "$reportFolder\userloginhistory.txt"
+        Get-WmiObject Win32_NetworkLoginProfile | Out-File "$userGroupInformationFolder\userloginhistory.txt"
         Log-Message "Collected user login history"
 
         # Installed Codecs
-        Get-WmiObject Win32_CodecFile | Out-File "$reportFolder\installedcodecs.txt"
+        Get-WmiObject Win32_CodecFile | Out-File "$installedSoftwareDriversFolder\installedcodecs.txt"
         Log-Message "Collected installed codecs"
 
         # System Environmental Variables
-        Get-WmiObject Win32_Environment | Out-File "$reportFolder\systemenvironmentvariables.txt"
+        Get-WmiObject Win32_Environment | Out-File "$advancedSystemInformationFolder\systemenvironmentvariables.txt"
         Log-Message "Collected system environmental variables"
 
         # Detailed Network Adapter Information
-        Get-WmiObject Win32_NetworkAdapter | Out-File "$reportFolder\networkadapterinfo.txt"
+        Get-WmiObject Win32_NetworkAdapter | Out-File "$networkConfigurationDiagnosticsFolder\networkadapterinfo.txt"
         Log-Message "Collected detailed network adapter information"
 
         # Detailed Network Adapter Configuration
-        Get-WmiObject Win32_NetworkAdapterConfiguration | Out-File "$reportFolder\networkadapterconfig.txt"
+        Get-WmiObject Win32_NetworkAdapterConfiguration | Out-File "$networkConfigurationDiagnosticsFolder\networkadapterconfig.txt"
         Log-Message "Collected detailed network adapter configuration"
 
         # Detailed Network Adapter Statistics
-        Get-WmiObject Win32_PerfFormattedData_Tcpip_NetworkAdapter | Out-File "$reportFolder\networkadapterstats.txt"
+        Get-WmiObject Win32_PerfFormattedData_Tcpip_NetworkAdapter | Out-File "$networkConfigurationDiagnosticsFolder\networkadapterstats.txt"
         Log-Message "Collected detailed network adapter statistics"
 
         # Advanced Security Audit Checks
-        Get-WmiObject -Class Win32_LogonSession | Out-File "$reportFolder\logonsessions.txt"
+        Get-WmiObject -Class Win32_LogonSession | Out-File "$systemSecurityAuditFolder\logonsessions.txt"
         Log-Message "Collected advanced security audit checks"
-        Get-WmiObject -Class Win32_SecurityDescriptor | Out-File "$reportFolder\securitydescriptors.txt"
+        Get-WmiObject -Class Win32_SecurityDescriptor | Out-File "$systemSecurityAuditFolder\securitydescriptors.txt"
         Log-Message "Collected advanced security audit checks"
-        Get-WmiObject -Class Win32_SystemAccount | Out-File "$reportFolder\systemaccounts.txt"
+        Get-WmiObject -Class Win32_SystemAccount | Out-File "$systemSecurityAuditFolder\systemaccounts.txt"
         Log-Message "Collected advanced security audit checks"
 
         # Detailed Hardware Configuration
-        Get-CimInstance -ClassName Win32_ComputerSystem | Format-List * | Out-File "$reportFolder\hardwareconfiguration.txt"
+        Get-CimInstance -ClassName Win32_ComputerSystem | Format-List * | Out-File "$hardwareInformationFolder\hardwareconfiguration.txt"
         Log-Message "Collected detailed hardware configuration"
 
         # Windows Licensing Status
-        cscript //Nologo $systemDrive\Windows\System32\slmgr.vbs /dli | Out-File "$reportFolder\windowslicensestatus.txt"
+        cscript //Nologo $systemDrive\Windows\System32\slmgr.vbs /dli | Out-File "$operatingSystemDetailsFolder\windowslicensestatus.txt"
         Log-Message "Collected Windows licensing status"
 
         # Stop Xperf data collection incase it is already running
