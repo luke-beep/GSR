@@ -9,6 +9,10 @@
 #                           21/12/2023                                #
 # =================================================================== #
 
+#----------------------------------------------
+# Script Functions
+#----------------------------------------------
+
 function Log-Message {
     param (
         [string]$Message
@@ -19,26 +23,30 @@ function Log-Message {
     Write-Host $LogMessage
 }
 
-# Script Name
-$scriptName = "GenerateSystemReport.ps1"
+#----------------------------------------------
+# Script Information
+#----------------------------------------------
 
-# Script Version
-$scriptVersion = "1.0.0"
+$scriptInfo = [PSCustomObject]@{
+    "Script Name" = "GenerateSystemReport.ps1"
+    "Script Version" = "1.0.0"
+    "Script Description" = "This script generates a system report for troubleshooting purposes."
+    "Script Author" = "Azrael (LukeHjo)"
+    "Script Date" = "21/12/2023"
+    "Script License" = "MIT"
+    "Script Repository" = "https://github.com/luke-beep/GSR"
+}
 
-# Script Description
-$scriptDescription = "This script generates a system report for troubleshooting purposes."
+#----------------------------------------------
+# Print Script Information
+#----------------------------------------------
 
-# Script Author
-$scriptAuthor = "Azrael (LukeHjo)"
+# Display the script information
+$scriptInfo | Format-List
 
-# Script Date
-$scriptDate = "21/12/2023"
-
-# Script License
-$scriptLicense = "MIT"
-
-# Script Repository
-$scriptRepository = ""
+#----------------------------------------------
+# Script Variables
+#----------------------------------------------
 
 # System Drive
 $systemDrive = $env:SystemDrive
@@ -46,8 +54,22 @@ $systemDrive = $env:SystemDrive
 # Empty Folder
 $emptyFolder = "$systemDrive\Empty"
 
+# System Reports Folder
+$systemReportsFolder = "$systemDrive\SystemReports"
+
+# Custom Folder
+$customFolder = ""
+
+# Use Custom Folder
+$useCustomFolder = $false
+
 # Report Folder
-$reportFolder = "$systemDrive\SystemReports"
+if ($useCustomFolder -eq $true) {
+    $reportFolder = $customFolder
+}
+else {
+    $reportFolder = $systemReportsFolder
+}
 
 # Debug Folder
 $debugFolder = "$reportFolder\Debug"
@@ -66,6 +88,36 @@ $xperfOutputTextFile = "$reportFolder\xperf_output.txt"
 
 # Transcript File
 $transcriptFile = "$reportFolder\debug.txt"
+
+$scriptVariables = [PSCustomObject]@{
+    "System Drive" = $systemDrive
+    "Empty Folder" = $emptyFolder
+    "System Reports Folder" = $systemReportsFolder
+    "Custom Folder" = $customFolder
+    "Use Custom Folder" = $useCustomFolder
+    "Report Folder" = $reportFolder
+    "Debug Folder" = $debugFolder
+    "Debug Mode" = $debug
+    "Xperf Capture Time" = $XperfCaptureTime
+    "Xperf Output File" = $xperfOutputFile
+    "Xperf Output Text File" = $xperfOutputTextFile
+    "Transcript File" = $transcriptFile
+}
+
+#----------------------------------------------
+# Print Script Variables
+#----------------------------------------------
+
+# Display the script variables
+$scriptVariables | Format-List
+
+# Pause for 5 seconds
+Start-Sleep -Seconds 5
+
+#----------------------------------------------
+# Script Execution
+#----------------------------------------------
+
 try {
     # Create Transcript File
     if (!(Test-Path $transcriptFile)) {
@@ -103,6 +155,11 @@ try {
     # Start Transcript
     Log-Message "Starting Transcript"
     Start-Transcript -Path $transcriptFile -Append
+
+    # Create README File
+    $scriptInfo | Out-File "$reportFolder\README.txt"
+    $scriptVariables | Out-File "$reportFolder\README.txt" -Append
+    Log-Message "README file created at $reportFolder\README.txt"
 
     if ($debug -eq $true) {
         Log-Message "Debug mode enabled"
@@ -354,4 +411,9 @@ catch {
 finally {
     # Stop Transcript
     Stop-Transcript
+    Log-Message "Ending Transcript"
 }
+
+#----------------------------------------------
+# End of Script
+#----------------------------------------------
