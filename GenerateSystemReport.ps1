@@ -30,7 +30,7 @@ function Log-Message {
 $scriptInfo = [PSCustomObject]@{
     "Script Name" = "GenerateSystemReport.ps1"
     "Script Version" = "1.0.0"
-    "Script Description" = "This script generates a system report for troubleshooting purposes."
+    "Script Description" = "A lightweight script that generates a system report for troubleshooting purposes."
     "Script Author" = "Azrael (LukeHjo)"
     "Script Date" = "21/12/2023"
     "Script License" = "MIT"
