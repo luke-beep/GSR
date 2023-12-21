@@ -99,84 +99,83 @@ $scriptVariables = [PSCustomObject]@{
 # Display the script variables
 $scriptVariables | Format-List
 
-# Pause for 5 seconds
-Start-Sleep -Seconds 5
-
 #----------------------------------------------
 # Script Execution
 #----------------------------------------------
 
 try {
+    # Local Variables
+    $hardwareInformationFolder = "$reportFolder\HardwareInformation"
+    $operatingSystemDetailsFolder = "$reportFolder\OperatingSystemDetails"
+    $networkConfigurationDiagnosticsFolder = "$reportFolder\NetworkConfigurationDiagnostics"
+    $diskStorageInformationFolder = "$reportFolder\DiskStorageInformation"
+    $systemSecurityAuditFolder = "$reportFolder\SystemSecurityAudit"
+    $systemApplicationLogsFolder = "$reportFolder\SystemApplicationLogs"
+    $servicesProcessesFolder = "$reportFolder\ServicesProcesses"
+    $installedSoftwareDriversFolder = "$reportFolder\InstalledSoftwareDrivers"
+    $systemPerformanceDiagnosticsFolder = "$reportFolder\SystemPerformanceDiagnostics"
+    $advancedSystemInformationFolder = "$reportFolder\AdvancedSystemInformation"
+    $powerManagementFolder = "$reportFolder\PowerManagement"
+    $userGroupInformationFolder = "$reportFolder\UserGroupInformation"
+    $backupRestoreInformationFolder = "$reportFolder\BackupRestoreInformation"
+
+    $logFolderCreated = $false
+    $logFolderRecreated = $false
+    $transcriptCreated = $false
+    $transcriptRecreated = $false
+    $emptyFolderCreated = $false
+    $emptyFolderRecreated = $false
+    
+    
     # Create Report Folder
     if (!(Test-Path $reportFolder)) {
         New-Item -ItemType Directory -Path $reportFolder
-        Log-Message "Report folder created at $reportFolder"
+        $logFolderCreated = $true
     }
     else {
         Start-Process robocopy -ArgumentList "/mir $emptyFolder $reportFolder" -NoNewWindow -Wait
         Remove-Item -Recurse -Force $reportFolder
-        Log-Message "Report folder recreated at $reportFolder"
+        $logFolderRecreated = $true
     }
 
     # Create Transcript File
     if (!(Test-Path $transcriptFile)) {
         New-Item -ItemType File -Path $transcriptFile
-        Log-Message "Transcript file created at $transcriptFile"
+        $transcriptCreated = $true
     }
     else {
         Remove-Item -Force $transcriptFile
         New-Item -ItemType File -Path $transcriptFile
-        Log-Message "Transcript file recreated at $transcriptFile"
+        $transcriptRecreated = $true
     }
 
     # Create Empty Folder
     if (!(Test-Path $emptyFolder)) {
         New-Item -ItemType Directory -Path $emptyFolder
-        Log-Message "Empty folder created at $emptyFolder"
+        $emptyFolderCreated = $true
     }
     else {
         Remove-Item -Recurse -Force $emptyFolder
         New-Item -ItemType Directory -Path $emptyFolder
-        Log-Message "Empty folder recreated at $emptyFolder"
+        $emptyFolderRecreated = $true
     }
-
-    # Start Transcript
-    Log-Message "Starting Transcript"
-    Start-Transcript -Path $transcriptFile -Append
 
     # Create README File
     $scriptInfo | Out-File "$reportFolder\README.txt"
     $scriptVariables | Out-File "$reportFolder\README.txt" -Append
-    Log-Message "README file created at $reportFolder\README.txt"
+
+    # Start Transcript
+    Start-Transcript -Path $transcriptFile -Append
 
     if ($debug -eq $true) {
         Log-Message "Debug mode enabled"
         # Create Debug Folder
-        if (!(Test-Path $debugFolder)) {
-            New-Item -ItemType Directory -Path $debugFolder
-        }
-        else {
-            Start-Process robocopy -ArgumentList "/mir $emptyFolder $debugFolder" -NoNewWindow -Wait
-        }
+        New-Item -ItemType Directory -Path $debugFolder
+        Log-Message "Created Debug Folder: $debugFolder"
 
         # Start Debugging
     }
     else {
-        # Local Variables
-        $hardwareInformationFolder = "$reportFolder\HardwareInformation"
-        $operatingSystemDetailsFolder = "$reportFolder\OperatingSystemDetails"
-        $networkConfigurationDiagnosticsFolder = "$reportFolder\NetworkConfigurationDiagnostics"
-        $diskStorageInformationFolder = "$reportFolder\DiskStorageInformation"
-        $systemSecurityAuditFolder = "$reportFolder\SystemSecurityAudit"
-        $systemApplicationLogsFolder = "$reportFolder\SystemApplicationLogs"
-        $servicesProcessesFolder = "$reportFolder\ServicesProcesses"
-        $installedSoftwareDriversFolder = "$reportFolder\InstalledSoftwareDrivers"
-        $systemPerformanceDiagnosticsFolder = "$reportFolder\SystemPerformanceDiagnostics"
-        $advancedSystemInformationFolder = "$reportFolder\AdvancedSystemInformation"
-        $powerManagementFolder = "$reportFolder\PowerManagement"
-        $userGroupInformationFolder = "$reportFolder\UserGroupInformation"
-        $backupRestoreInformationFolder = "$reportFolder\BackupRestoreInformation"
-
         # Create Folders
         New-Item -ItemType Directory -Path $hardwareInformationFolder
         New-Item -ItemType Directory -Path $operatingSystemDetailsFolder
@@ -192,6 +191,55 @@ try {
         New-Item -ItemType Directory -Path $userGroupInformationFolder
         New-Item -ItemType Directory -Path $backupRestoreInformationFolder
 
+        # Log Folder
+        if ($logFolderCreated -eq $true){
+            Log-Message "Created Log Folder: $reportFolder"
+        }
+        elseif ($logFolderRecreated -eq $true) {
+            Log-Message "Recreated Log Folder: $reportFolder"
+        }
+        else {
+            Log-Message "Log folder already exists at $reportFolder"
+        }
+
+        # Log Transcript
+        if ($transcriptCreated -eq $true) {
+            Log-Message "Created Transcript File: $transcriptFile"
+        }
+        elseif ($transcriptRecreated -eq $true) {
+            Log-Message "Recreated Transcript File: $transcriptFile"
+        }
+        else {
+            Log-Message "Transcript file already exists at $transcriptFile"
+        }
+
+        # Log Empty Folder
+        if ($emptyFolderCreated -eq $true) {
+            Log-Message "Created Empty Folder: $emptyFolder"
+        }
+        elseif ($emptyFolderRecreated -eq $true) {
+            Log-Message "Recreated Empty Folder: $emptyFolder"
+        }
+        else {
+            Log-Message "Empty folder already exists at $emptyFolder"
+        }
+
+        # Log Folder
+        Log-Message "Created README File: $reportFolder\README.txt"
+        Log-Message "Created Hardware Information Folder: $hardwareInformationFolder"
+        Log-Message "Created Operating System Details Folder: $operatingSystemDetailsFolder"
+        Log-Message "Created Network Configuration Diagnostics Folder: $networkConfigurationDiagnosticsFolder"
+        Log-Message "Created Disk Storage Information Folder: $diskStorageInformationFolder"
+        Log-Message "Created System Security Audit Folder: $systemSecurityAuditFolder"
+        Log-Message "Created System Application Logs Folder: $systemApplicationLogsFolder"
+        Log-Message "Created Services Processes Folder: $servicesProcessesFolder"
+        Log-Message "Created Installed Software Drivers Folder: $installedSoftwareDriversFolder"
+        Log-Message "Created System Performance Diagnostics Folder: $systemPerformanceDiagnosticsFolder"
+        Log-Message "Created Advanced System Information Folder: $advancedSystemInformationFolder"
+        Log-Message "Created Power Management Folder: $powerManagementFolder"
+        Log-Message "Created User Group Information Folder: $userGroupInformationFolder"
+        Log-Message "Created Backup Restore Information Folder: $backupRestoreInformationFolder"
+
         # Xperf Capture Time (in seconds)
         $XperfCaptureTime = 10
             
@@ -200,9 +248,6 @@ try {
 
         # Xperf output text file
         $xperfOutputTextFile = "$systemPerformanceDiagnosticsFolder\xperf_output.txt"
-
-        # Start System Report
-        Log-Message "Starting System Report"
 
         # GPResult for Group Policy Report
         GPResult /H "$systemSecurityAuditFolder\GPReport.html"
@@ -438,7 +483,6 @@ catch {
 finally {
     # Stop Transcript
     Stop-Transcript
-    Log-Message "Ending Transcript"
 }
 
 #----------------------------------------------
