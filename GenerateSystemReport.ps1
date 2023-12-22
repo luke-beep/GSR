@@ -6,8 +6,22 @@
 #  *-*-*   +   -   *   +   -*-*   +   -   *   +   -*-*   +   -   *    #
 # =================================================================== #
 #                   Created by Azrael (LukeHjo)                       #
-#                           21/12/2023                                #
+#                           22/12/2023                                #
 # =================================================================== #
+
+#----------------------------------------------
+# Script Imports
+#----------------------------------------------
+
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+public class NativeMethods {
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    public static extern IntPtr MessageBox(IntPtr hWnd, String text, String caption, uint type);
+}
+"@
 
 #----------------------------------------------
 # Script Functions
@@ -29,10 +43,10 @@ function Log-Message {
 
 $scriptInfo = [PSCustomObject]@{
     "Script Name" = "GenerateSystemReport (GSR)"
-    "Script Version" = "1.0.1"
+    "Script Version" = "1.0.2"
     "Script Description" = "A lightweight script that generates a system report for troubleshooting purposes."
     "Script Author" = "Azrael (LukeHjo)"
-    "Script Date" = "21/12/2023"
+    "Script Date" = "22/12/2023"
     "Script License" = "MIT"
     "Script Repository" = "https://github.com/luke-beep/GSR"
 }
@@ -174,6 +188,9 @@ try {
         Log-Message "Created Debug Folder: $debugFolder"
 
         # Start Debugging
+
+        # Stop Transcript
+        Stop-Transcript
     }
     else {
         # Create Folders
@@ -260,6 +277,19 @@ try {
         # Disk Information
         Get-Disk | Out-File "$diskStorageInformationFolder\diskinfo.txt"
         Log-Message "Collected disk information"
+
+        # Physical Disk Information
+        Get-PhysicalDisk | Get-StorageReliabilityCounter | Out-File "$diskStorageInformationFolder\physicaldiskinfo.txt"
+        Log-Message "Collected physical disk information"
+
+        # ACL Information
+        Get-Acl -Path $systemDrive | Out-File "$systemSecurityAuditFolder\aclinfo.txt"
+
+        # Windows Update Hotfixes
+        Get-HotFix | Out-File "$operatingSystemDetailsFolder\hotfixes.txt"
+
+        # Windows Update Logs
+        Get-WindowsUpdateLog | Out-File "$operatingSystemDetailsFolder\windowsupdatelog.txt"
 
         # Network Configuration
         Get-NetIPConfiguration | Out-File "$networkConfigurationDiagnosticsFolder\networkconfig.txt"
@@ -454,6 +484,22 @@ try {
         cscript //Nologo $systemDrive\Windows\System32\slmgr.vbs /dli | Out-File "$operatingSystemDetailsFolder\windowslicensestatus.txt"
         Log-Message "Collected Windows licensing status"
 
+        Get-PnpDevice -PresentOnly | Where-Object { $_.InstanceId -match '^USB' } | Out-File "$hardwareInformationFolder\usbdevices.txt"
+        Log-Message "Collected USB device information"
+
+        # Detailed System Configuration
+        Get-WmiObject Win32_ComputerSystemProduct | Out-File "$advancedSystemInformationFolder\computerproduct.txt"
+
+        # Collect CPU Usage
+        $cpuInfo = Get-Counter -Counter "\Processor(*)\% Processor Time" -SampleInterval 1 -MaxSamples 1
+
+        # Write per-core CPU usage to a file
+        foreach ($cpu in $cpuInfo.CounterSamples) {
+            if ($cpu.InstanceName -ne "_Total" -and $cpu.InstanceName -ne "Idle") {
+                "Core $($cpu.InstanceName) Usage: $($cpu.CookedValue)%" | Out-File -FilePath "$systemPerformanceDiagnosticsFolder\cpuload.txt" -Append
+            }
+        }
+
         # Stop Xperf data collection incase it is already running
         Start-Process xperf.exe -ArgumentList "-stop" -NoNewWindow -Wait
         Log-Message "Stopped Xperf data collection"
@@ -474,11 +520,17 @@ try {
         Start-Process xperf.exe -ArgumentList "-i $xperfOutputFile -o $xperfOutputTextFile -a dumper" -NoNewWindow -Wait
         Log-Message "Converted Xperf output to a text file @ $xperfOutputTextFile"
 
+        # Open the report folder
         Invoke-Item -Path $reportFolder
+
+        # Display a message box
+        [NativeMethods]::MessageBox([IntPtr]::Zero, "System report generated successfully.", "GSR", 0x00000040)
     }
 }
 catch {
-
+    Log-Message "Error: $_.Exception.Message"
+    Log-Message "Error Details: $_"
+    Log-Message "Error Location: $($_.InvocationInfo.ScriptName) at line $($_.InvocationInfo.ScriptLineNumber), column $($_.InvocationInfo.OffsetInLine)"
 }
 finally {
     # Stop Transcript
