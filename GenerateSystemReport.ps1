@@ -13,6 +13,9 @@
 # Script Imports
 #----------------------------------------------
 
+Import-Module Microsoft.PowerShell.Security
+Import-Module Microsoft.PowerShell.Security
+
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
