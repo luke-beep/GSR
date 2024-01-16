@@ -14,7 +14,7 @@
 #----------------------------------------------
 
 Import-Module Microsoft.PowerShell.Security
-Import-Module Microsoft.PowerShell.Security
+Import-Module Microsoft.PowerShell.Management
 
 Add-Type -TypeDefinition @"
 using System;
@@ -41,8 +41,8 @@ function Log-Message {
 }
 
 TRAP {
-  Log-Message $_.Exception.Message
-  continue
+    Log-Message $_.Exception.Message
+    continue
 }
 
 #----------------------------------------------
@@ -50,13 +50,13 @@ TRAP {
 #----------------------------------------------
 
 $scriptInfo = [PSCustomObject]@{
-    "Script Name" = "GenerateSystemReport (GSR)"
-    "Script Version" = "1.0.2"
+    "Script Name"        = "GenerateSystemReport (GSR)"
+    "Script Version"     = "1.0.2"
     "Script Description" = "A lightweight script that generates a system report for troubleshooting purposes."
-    "Script Author" = "Azrael (LukeHjo)"
-    "Script Date" = "22/12/2023"
-    "Script License" = "MIT"
-    "Script Repository" = "https://github.com/luke-beep/GSR"
+    "Script Author"      = "Azrael (LukeHjo)"
+    "Script Date"        = "22/12/2023"
+    "Script License"     = "MIT"
+    "Script Repository"  = "https://github.com/luke-beep/GSR"
 }
 
 #----------------------------------------------
@@ -103,15 +103,15 @@ $debug = $false
 $transcriptFile = "$reportFolder\debug.txt"
 
 $scriptVariables = [PSCustomObject]@{
-    "System Drive" = $systemDrive
-    "Empty Folder" = $emptyFolder
+    "System Drive"          = $systemDrive
+    "Empty Folder"          = $emptyFolder
     "System Reports Folder" = $systemReportsFolder
-    "Custom Folder" = $customFolder
-    "Use Custom Folder" = $useCustomFolder
-    "Report Folder" = $reportFolder
-    "Debug Folder" = $debugFolder
-    "Debug Mode" = $debug
-    "Transcript File" = $transcriptFile
+    "Custom Folder"         = $customFolder
+    "Use Custom Folder"     = $useCustomFolder
+    "Report Folder"         = $reportFolder
+    "Debug Folder"          = $debugFolder
+    "Debug Mode"            = $debug
+    "Transcript File"       = $transcriptFile
 }
 
 #----------------------------------------------
@@ -147,7 +147,6 @@ try {
     $transcriptRecreated = $false
     $emptyFolderCreated = $false
     $emptyFolderRecreated = $false
-    
     
     # Create Report Folder
     if (!(Test-Path $reportFolder)) {
@@ -217,7 +216,7 @@ try {
         New-Item -ItemType Directory -Path $backupRestoreInformationFolder
 
         # Log Folder
-        if ($logFolderCreated -eq $true){
+        if ($logFolderCreated -eq $true) {
             Log-Message "Created Log Folder: $reportFolder"
         }
         elseif ($logFolderRecreated -eq $true) {
