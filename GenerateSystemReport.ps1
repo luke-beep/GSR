@@ -13,6 +13,8 @@
 # Script Imports
 #----------------------------------------------
 
+Import-Module Microsoft.PowerShell.Security
+
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -140,7 +142,7 @@ $emptyFolderCreated = $false
 $emptyFolderRecreated = $false
     
 # Create Report Folder
-try{
+try {
     if (!(Test-Path $reportFolder)) {
         New-Item -ItemType Directory -Path $reportFolder
         $logFolderCreated = $true
@@ -282,14 +284,8 @@ try{
         Get-PhysicalDisk | Get-StorageReliabilityCounter | Out-File "$diskStorageInformationFolder\physicaldiskinfo.txt"
         Log-Message "Collected physical disk information"
     
-        # ACL Information
-        Get-Acl -Path $systemDrive | Out-File "$systemSecurityAuditFolder\aclinfo.txt"
-    
         # Windows Update Hotfixes
-        Get-HotFix | Out-File "$operatingSystemDetailsFolder\hotfixes.txt"
-    
-        # Windows Update Logs
-        Get-WindowsUpdateLog | Out-File "$operatingSystemDetailsFolder\windowsupdatelog.txt"
+        Get-HotFix | Out-File "$operatingSystemDetailsFolder\hotfixes.txt"  
     
         # Network Configuration
         Get-NetIPConfiguration | Out-File "$networkConfigurationDiagnosticsFolder\networkconfig.txt"
