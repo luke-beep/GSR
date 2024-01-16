@@ -40,11 +40,6 @@ function Log-Message {
     Write-Host $LogMessage
 }
 
-TRAP {
-    Log-Message $_.Exception.Message
-    continue
-}
-
 #----------------------------------------------
 # Script Information
 #----------------------------------------------
@@ -155,6 +150,8 @@ try {
     }
     else {
         Start-Process robocopy -ArgumentList "/mir $emptyFolder $reportFolder" -NoNewWindow -Wait
+        Remove-Item -Recurse -Force $emptyFolder
+        New-Item -ItemType Directory -Path $emptyFolder
         $logFolderRecreated = $true
     }
 
