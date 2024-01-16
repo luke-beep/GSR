@@ -506,25 +506,31 @@ try {
             }
         }
 
-        # Stop Xperf data collection incase it is already running
-        Start-Process xperf.exe -ArgumentList "-stop" -NoNewWindow -Wait
-        Log-Message "Stopped Xperf data collection"
+        $xperfInstalled = Get-Command -Name xperf -ErrorAction SilentlyContinue
+        if (-not $xperfInstalled) {
+            Log-Message "Xperf not installed. Skipping Xperf capture."
+        } 
+        else {
+            # Stop Xperf data collection incase it is already running
+            Start-Process xperf.exe -ArgumentList "-stop" -NoNewWindow -Wait
+            Log-Message "Stopped Xperf data collection"
 
-        # Start Xperf data collection
-        Start-Process xperf.exe -ArgumentList "-on DiagEasy+PROFILE -BufferSize 512 /f $xperfOutputFile" -NoNewWindow -Wait
-        Log-Message "Started Xperf data collection"
+            # Start Xperf data collection
+            Start-Process xperf.exe -ArgumentList "-on DiagEasy+PROFILE -BufferSize 512 /f $xperfOutputFile" -NoNewWindow -Wait
+            Log-Message "Started Xperf data collection"
 
-        # Pause for Xperf data collection
-        Start-Sleep -Seconds $XperfCaptureTime
-        Log-Message "Sleeping for $XperfCaptureTime seconds"
+            # Pause for Xperf data collection
+            Start-Sleep -Seconds $XperfCaptureTime
+            Log-Message "Sleeping for $XperfCaptureTime seconds"
 
-        # Stop Xperf data collection
-        Start-Process xperf.exe -ArgumentList "-stop" -NoNewWindow -Wait
-        Log-Message "Stopped Xperf data collection"
+            # Stop Xperf data collection
+            Start-Process xperf.exe -ArgumentList "-stop" -NoNewWindow -Wait
+            Log-Message "Stopped Xperf data collection"
 
-        # Convert Xperf output to a text file
-        Start-Process xperf.exe -ArgumentList "-i $xperfOutputFile -o $xperfOutputTextFile -a dumper" -NoNewWindow -Wait
-        Log-Message "Converted Xperf output to a text file @ $xperfOutputTextFile"
+            # Convert Xperf output to a text file
+            Start-Process xperf.exe -ArgumentList "-i $xperfOutputFile -o $xperfOutputTextFile -a dumper" -NoNewWindow -Wait
+            Log-Message "Converted Xperf output to a text file @ $xperfOutputTextFile"        
+        }
 
         # Open the report folder
         Invoke-Item -Path $reportFolder
