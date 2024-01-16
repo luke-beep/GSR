@@ -40,6 +40,11 @@ function Log-Message {
     Write-Host $LogMessage
 }
 
+TRAP {
+  Log-Message $_.Exception.Message
+  continue
+}
+
 #----------------------------------------------
 # Script Information
 #----------------------------------------------
