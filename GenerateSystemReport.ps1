@@ -40,6 +40,14 @@ function Log-Message {
     Write-Host $LogMessage
 }
 
+TRAP {
+    Log-Message "Error: $_.Exception.Message"
+    Log-Message "Error Details: $_"
+    Log-Message "Error Location: $($_.InvocationInfo.ScriptName) at line $($_.InvocationInfo.ScriptLineNumber), column $($_.InvocationInfo.OffsetInLine)"
+
+    continue
+}
+
 #----------------------------------------------
 # Script Information
 #----------------------------------------------
@@ -535,11 +543,6 @@ try {
         # Display a message box
         [NativeMethods]::MessageBox([IntPtr]::Zero, "System report generated successfully.", "GSR", 0x00000040)
     }
-}
-catch {
-    Log-Message "Error: $_.Exception.Message"
-    Log-Message "Error Details: $_"
-    Log-Message "Error Location: $($_.InvocationInfo.ScriptName) at line $($_.InvocationInfo.ScriptLineNumber), column $($_.InvocationInfo.OffsetInLine)"
 }
 finally {
     # Stop Transcript
