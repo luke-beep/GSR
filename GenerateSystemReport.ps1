@@ -14,7 +14,6 @@
 #----------------------------------------------
 
 Import-Module Microsoft.PowerShell.Security
-Import-Module Microsoft.PowerShell.Management
 
 Add-Type -TypeDefinition @"
 using System;
