@@ -155,7 +155,6 @@ try {
     }
     else {
         Start-Process robocopy -ArgumentList "/mir $emptyFolder $reportFolder" -NoNewWindow -Wait
-        Remove-Item -Recurse -Force $reportFolder
         $logFolderRecreated = $true
     }
 
